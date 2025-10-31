@@ -1,0 +1,170 @@
+<app-search-form (searchEvent)="onSearch($event)"></app-search-form>
+
+<div *ngIf="characterData" class="wow-classic-profile-container">
+  <div class="profile-header">
+    <h2 class="character-name">{{ character.name }}</h2>
+    <p class="character-info">Level {{ character.level }} {{ character.race.name }} {{ character.character_class.name }} - {{ character.faction.name }}</p>
+    <p *ngIf="character.guild" class="character-guild">&lt;{{ character.guild.name }}&gt;</p>
+  </div>
+
+  <div class="profile-body">
+    <div class="profile-left-panel">
+      <div *ngIf="characterImageUrl" class="character-image-frame">
+        <img [src]="characterImageUrl" alt="{{ character.name }} character image" class="character-portrait">
+      </div>
+
+      <div *ngIf="statistics" class="stats-panel">
+        <h3>Statistics</h3>
+        <div class="stat-group">
+          <p *ngIf="statistics.health > 0">Health: {{ statistics.health }}</p>
+          <p *ngIf="statistics.strength?.effective > 0">Strength: {{ statistics.strength.effective }}</p>
+          <p *ngIf="statistics.agility?.effective > 0">Agility: {{ statistics.agility.effective }}</p>
+          <p *ngIf="statistics.intellect?.effective > 0">Intellect: {{ statistics.intellect.effective }}</p>
+          <p *ngIf="statistics.stamina?.effective > 0">Stamina: {{ statistics.stamina.effective }}</p>
+
+          <p *ngIf="getPrimaryCrit() !== null">Crit: {{ getPrimaryCrit() | number:'1.2-2' }}%</p>
+          <p *ngIf="getPrimaryHaste() !== null">Haste: {{ getPrimaryHaste() | number:'1.2-2' }}%</p>
+
+          <p *ngIf="statistics.mastery?.value > 0">Mastery: {{ statistics.mastery.value | number:'1.2-2' }}%</p>
+          <p *ngIf="statistics.versatility?.value > 0">Versatility: {{ statistics.versatility.value | number:'1.2-2' }}%</p>
+        </div>
+      </div>
+
+      <div *ngIf="professions" class="professions-panel">
+        <h3>Professions</h3>
+        <div *ngIf="professions.primaries?.length > 0">
+          <h4>Primary</h4>
+          <div *ngFor="let profession of professions.primaries" class="profession-item">
+            <p *ngIf="profession.tiers?.length > 0">{{ profession.profession.name }} ({{ profession.tiers[0].skill_points }}/{{ profession.tiers[0].max_skill_points }})</p>
+            <p *ngIf="!profession.tiers?.length"> {{ profession.profession.name }} (No skill data)</p>
+          </div>
+        </div>
+        <div *ngIf="professions.secondaries?.length > 0">
+          <h4>Secondary</h4>
+          <div *ngFor="let profession of professions.secondaries" class="profession-item">
+            <p *ngIf="profession.tiers?.length > 0">{{ profession.profession.name }} ({{ profession.tiers[0].skill_points }}/{{ profession.tiers[0].max_skill_points }})</p>
+            <p *ngIf="!profession.tiers?.length"> {{ profession.profession.name }} (No skill data)</p>
+          </div>
+        </div>
+        <p *ngIf="!professions.primaries?.length && !professions.secondaries?.length">No professions found.</p>
+      </div>
+    </div>
+
+    <div class="profile-right-panel">
+      <div *ngIf="equipment" class="equipment-panel">
+        <h3>Equipment</h3>
+        <div class="equipment-diagram">
+          <!-- Head -->
+          <div class="equipment-slot head">
+            <img *ngIf="getEquippedItem('HEAD')?.iconUrl" [src]="getEquippedItem('HEAD')?.iconUrl" alt="Head" class="item-icon">
+            <span *ngIf="!getEquippedItem('HEAD')?.iconUrl" class="slot-placeholder">Head</span>
+          </div>
+          <!-- Neck -->
+          <div class="equipment-slot neck">
+            <img *ngIf="getEquippedItem('NECK')?.iconUrl" [src]="getEquippedItem('NECK')?.iconUrl" alt="Neck" class="item-icon">
+            <span *ngIf="!getEquippedItem('NECK')?.iconUrl" class="slot-placeholder">Neck</span>
+          </div>
+          <!-- Shoulders -->
+          <div class="equipment-slot shoulders">
+            <img *ngIf="getEquippedItem('SHOULDER')?.iconUrl" [src]="getEquippedItem('SHOULDER')?.iconUrl" alt="Shoulders" class="item-icon">
+            <span *ngIf="!getEquippedItem('SHOULDER')?.iconUrl" class="slot-placeholder">Shoulders</span>
+          </div>
+          <!-- Back -->
+          <div class="equipment-slot back">
+            <img *ngIf="getEquippedItem('BACK')?.iconUrl" [src]="getEquippedItem('BACK')?.iconUrl" alt="Back" class="item-icon">
+            <span *ngIf="!getEquippedItem('BACK')?.iconUrl" class="slot-placeholder">Back</span>
+          </div>
+          <!-- Chest -->
+          <div class="equipment-slot chest">
+            <img *ngIf="getEquippedItem('CHEST')?.iconUrl" [src]="getEquippedItem('CHEST')?.iconUrl" alt="Chest" class="item-icon">
+            <span *ngIf="!getEquippedItem('CHEST')?.iconUrl" class="slot-placeholder">Chest</span>
+          </div>
+          <!-- Wrist -->
+          <div class="equipment-slot wrist">
+            <img *ngIf="getEquippedItem('WRIST')?.iconUrl" [src]="getEquippedItem('WRIST')?.iconUrl" alt="Wrist" class="item-icon">
+            <span *ngIf="!getEquippedItem('WRIST')?.iconUrl" class="slot-placeholder">Wrist</span>
+          </div>
+          <!-- Hands -->
+          <div class="equipment-slot hands">
+            <img *ngIf="getEquippedItem('HAND')?.iconUrl" [src]="getEquippedItem('HAND')?.iconUrl" alt="Hands" class="item-icon">
+            <span *ngIf="!getEquippedItem('HAND')?.iconUrl" class="slot-placeholder">Hands</span>
+          </div>
+          <!-- Waist -->
+          <div class="equipment-slot waist">
+            <img *ngIf="getEquippedItem('WAIST')?.iconUrl" [src]="getEquippedItem('WAIST')?.iconUrl" alt="Waist" class="item-icon">
+            <span *ngIf="!getEquippedItem('WAIST')?.iconUrl" class="slot-placeholder">Waist</span>
+          </div>
+          <!-- Legs -->
+          <div class="equipment-slot legs">
+            <img *ngIf="getEquippedItem('LEGS')?.iconUrl" [src]="getEquippedItem('LEGS')?.iconUrl" alt="Legs" class="item-icon">
+            <span *ngIf="!getEquippedItem('LEGS')?.iconUrl" class="slot-placeholder">Legs</span>
+          </div>
+          <!-- Feet -->
+          <div class="equipment-slot feet">
+            <img *ngIf="getEquippedItem('FEET')?.iconUrl" [src]="getEquippedItem('FEET')?.iconUrl" alt="Feet" class="item-icon">
+            <span *ngIf="!getEquippedItem('FEET')?.iconUrl" class="slot-placeholder">Feet</span>
+          </div>
+          <!-- Finger 1 -->
+          <div class="equipment-slot finger1">
+            <img *ngIf="getEquippedItem('FINGER_1')?.iconUrl" [src]="getEquippedItem('FINGER_1')?.iconUrl" alt="Finger 1" class="item-icon">
+            <span *ngIf="!getEquippedItem('FINGER_1')?.iconUrl" class="slot-placeholder">Ring 1</span>
+          </div>
+          <!-- Finger 2 -->
+          <div class="equipment-slot finger2">
+            <img *ngIf="getEquippedItem('FINGER_2')?.iconUrl" [src]="getEquippedItem('FINGER_2')?.iconUrl" alt="Finger 2" class="item-icon">
+            <span *ngIf="!getEquippedItem('FINGER_2')?.iconUrl" class="slot-placeholder">Ring 2</span>
+          </div>
+          <!-- Trinket 1 -->
+          <div class="equipment-slot trinket1">
+            <img *ngIf="getEquippedItem('TRINKET_1')?.iconUrl" [src]="getEquippedItem('TRINKET_1')?.iconUrl" alt="Trinket 1" class="item-icon">
+            <span *ngIf="!getEquippedItem('TRINKET_1')?.iconUrl" class="slot-placeholder">Trinket 1</span>
+          </div>
+          <!-- Trinket 2 -->
+          <div class="equipment-slot trinket2">
+            <img *ngIf="getEquippedItem('TRINKET_2')?.iconUrl" [src]="getEquippedItem('TRINKET_2')?.iconUrl" alt="Trinket 2" class="item-icon">
+            <span *ngIf="!getEquippedItem('TRINKET_2')?.iconUrl" class="slot-placeholder">Trinket 2</span>
+          </div>
+          <!-- Main Hand -->
+          <div class="equipment-slot mainhand">
+            <img *ngIf="getEquippedItem('MAIN_HAND')?.iconUrl" [src]="getEquippedItem('MAIN_HAND')?.iconUrl" alt="Main Hand" class="item-icon">
+            <span *ngIf="!getEquippedItem('MAIN_HAND')?.iconUrl" class="slot-placeholder">Main Hand</span>
+          </div>
+          <!-- Off Hand -->
+          <div class="equipment-slot offhand">
+            <img *ngIf="getEquippedItem('OFF_HAND')?.iconUrl" [src]="getEquippedItem('OFF_HAND')?.iconUrl" alt="Off Hand" class="item-icon">
+            <span *ngIf="!getEquippedItem('OFF_HAND')?.iconUrl" class="slot-placeholder">Off Hand</span>
+          </div>
+          <!-- Ranged (or Relic/Idol/Totem for classic) -->
+          <div class="equipment-slot ranged">
+            <img *ngIf="getEquippedItem('RANGED')?.iconUrl" [src]="getEquippedItem('RANGED')?.iconUrl" alt="Ranged" class="item-icon">
+            <span *ngIf="!getEquippedItem('RANGED')?.iconUrl" class="slot-placeholder">Ranged</span>
+          </div>
+        </div>
+        <p *ngIf="!equipment.equipped_items?.length">No equipped items found.</p>
+      </div>
+
+      <div *ngIf="reputations" class="reputations-panel">
+        <h3>Reputations</h3>
+        <div *ngIf="reputations.reputations?.length > 0">
+          <div *ngFor="let rep of reputations.reputations" class="reputation-item">
+            <p>{{ rep.faction.name }}: {{ rep.standing.name }}</p>
+          </div>
+        </div>
+        <p *ngIf="!reputations.reputations?.length">No reputations found.</p>
+      </div>
+
+      <div *ngIf="titles && titles.titles?.length > 0" class="titles-panel">
+        <h3>Titles</h3>
+        <div *ngFor="let title of titles.titles" class="title-item">
+          <p>{{ title.name }}</p>
+        </div>
+      </div>
+      <p *ngIf="titles && !titles.titles?.length">No titles found.</p>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="error" class="error-message">
+  <p>Character not found or an error occurred.</p>
+  <p *ngIf="error.message">{{ error.message }}</p>
+</div>

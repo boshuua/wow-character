@@ -1,0 +1,52 @@
+:host {
+  display: block;
+  max-width: 600px;
+  margin: 2rem auto; /* Center the component and add vertical margin */
+  padding: 2rem;
+  background-color: rgba(35, 35, 35, 0.95); /* Slightly darker background */
+  border: 2px solid #c89b3c;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+  color: #f0e6d2;
+}
+
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center; /* Center items in the form */
+}
+
+.search-form input {
+  flex: 1 1 200px;
+  padding: 0.8rem;
+  border: 1px solid #c89b3c;
+  border-radius: 4px;
+  background-color: #1a1a1a;
+  color: #f0e6d2;
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+}
+
+.search-form input::placeholder {
+  color: #a9a9a9;
+}
+
+.search-form button {
+  padding: 0.8rem 1.5rem;
+  border: 1px solid #c89b3c;
+  border-radius: 4px;
+  background-color: #c89b3c;
+  color: #1a1a1a;
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+  flex-grow: 0; /* Prevent button from growing too much */
+}
+
+.search-form button:hover {
+  background-color: #f0e6d2;
+  color: #1a1a1a;
+}

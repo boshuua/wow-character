@@ -11,6 +11,7 @@ export class WowApiService {
   private region = 'eu';
   private backendUrl = 'http://localhost:3000/api/wow'; // Base URL for the backend proxy
   private apiUrl = `${this.backendUrl}/profile/wow/character`;
+  private collectionsUrl = `${this.backendUrl}/profile/wow/character`;
   private characterMediaUrl = `${this.backendUrl}/profile/wow/character`;
   private itemMediaBaseUrl = `${this.backendUrl}/data/wow/media/item`; // Base URL for item media
 
@@ -44,6 +45,9 @@ export class WowApiService {
   }
 
   getCharacterData(characterName: string, realm: string): Observable<any> {
+    const normalizedName = characterName.toLowerCase();
+    const normalizedRealm = realm.toLowerCase();
+
     return this.getAccessToken().pipe(
       switchMap(token => {
         const headers = new HttpHeaders({
@@ -54,52 +58,66 @@ export class WowApiService {
           .set('namespace', 'profile-eu')
           .set('region', 'eu');
 
-        const characterProfileRequest = this.http.get(`${this.apiUrl}/${realm}/${characterName.toLowerCase()}`, { headers: headers, params: params });
-        const characterMediaRequest = this.http.get(`${this.characterMediaUrl}/${realm}/${characterName.toLowerCase()}/character-media`, { headers: headers, params: params });
-        const characterEquipmentRequest = this.http.get(`${this.apiUrl}/${realm}/${characterName.toLowerCase()}/equipment`, { headers: headers, params: params });
-        const characterStatisticsRequest = this.http.get(`${this.apiUrl}/${realm}/${characterName.toLowerCase()}/statistics`, { headers: headers, params: params });
-        const characterProfessionsRequest = this.http.get(`${this.apiUrl}/${realm}/${characterName.toLowerCase()}/professions`, { headers: headers, params: params });
-        const characterReputationsRequest = this.http.get(`${this.apiUrl}/${realm}/${characterName.toLowerCase()}/reputations`, { headers: headers, params: params });
-        const characterTitlesRequest = this.http.get(`${this.apiUrl}/${realm}/${characterName.toLowerCase()}/titles`, { headers: headers, params: params });
+        const base = `${this.apiUrl}/${normalizedRealm}/${normalizedName}`;
 
+        const requests = {
+          profile: this.http.get(`${base}`, { headers, params }),
+          media: this.http.get(`${base}/character-media`, { headers, params }).pipe(catchError(() => of(null))),
+          equipment: this.http.get(`${base}/equipment`, { headers, params }).pipe(catchError(() => of(null))),
+          statistics: this.http.get(`${base}/statistics`, { headers, params }).pipe(catchError(() => of(null))),
+          professions: this.http.get(`${base}/professions`, { headers, params }).pipe(catchError(() => of(null))),
+          reputations: this.http.get(`${base}/reputations`, { headers, params }).pipe(catchError(() => of(null))),
+          titles: this.http.get(`${base}/titles`, { headers, params }).pipe(catchError(() => of(null))),
+          specializations: this.http.get(`${base}/specializations`, { headers, params }).pipe(catchError(() => of(null))),
+          mounts: this.http.get(`${base}/collections/mounts`, { headers, params }).pipe(catchError(() => of(null))),
+          pets: this.http.get(`${base}/collections/pets`, { headers, params }).pipe(catchError(() => of(null))),
+          achievements: this.http.get(`${base}/achievements`, { headers, params }).pipe(catchError(() => of(null))),
+          mythicKeystone: this.http.get(`${base}/mythic-keystone-profile`, { headers, params }).pipe(catchError(() => of(null))),
+          pvpSummary: this.http.get(`${base}/pvp-summary`, { headers, params }).pipe(catchError(() => of(null))),
+          raids: this.http.get(`${base}/encounters/raids`, { headers, params }).pipe(catchError(() => of(null)))
+        };
 
-        return forkJoin([
-          characterProfileRequest,
-          characterMediaRequest,
-          characterEquipmentRequest,
-          characterStatisticsRequest,
-          characterProfessionsRequest,
-          characterReputationsRequest,
-          characterTitlesRequest
-        ]).pipe(
-          switchMap(([profile, media, equipment, statistics, professions, reputations, titles]) => {
-            const mainImage = (media as any).assets.find((asset: any) => asset.key === 'main-raw');
-            const characterData: any = { // Explicitly type characterData as any
-              profile: profile,
-              imageUrl: mainImage ? mainImage.value : null,
-              equipment: equipment,
-              statistics: statistics,
-              professions: professions,
-              reputations: reputations,
-              titles: titles
+        return forkJoin(requests).pipe(
+          switchMap((results: any) => {
+            const media = results.media;
+            let imageUrl = null;
+
+            // Fallback strategy for character image to ensure one is always shown if possible
+            if (media && media.assets) {
+              const mainAsset = media.assets.find((asset: any) => asset.key === 'main');
+              const insetAsset = media.assets.find((asset: any) => asset.key === 'inset');
+              const mainRawAsset = media.assets.find((asset: any) => asset.key === 'main-raw');
+
+              if (mainAsset) {
+                imageUrl = mainAsset.value;
+              } else if (insetAsset) {
+                imageUrl = insetAsset.value;
+              } else if (mainRawAsset) {
+                imageUrl = mainRawAsset.value;
+              }
+            }
+            
+            const characterData: any = {
+              ...results,
+              imageUrl: imageUrl
             };
 
             // Fetch item media for equipped items
-            if ((characterData.equipment as any)?.equipped_items && (characterData.equipment as any).equipped_items.length > 0) { // Cast to any
-              const itemMediaRequests: Observable<string | null>[] = (characterData.equipment as any).equipped_items.map((item: any) => // Cast to any
+            if (characterData.equipment?.equipped_items?.length > 0) {
+              const itemMediaRequests: Observable<string | null>[] = characterData.equipment.equipped_items.map((item: any) =>
                 this.getItemMedia(item.media.key.href, token)
               );
 
               return forkJoin(itemMediaRequests).pipe(
-                map((itemIconUrls: (string | null)[]) => { // Explicitly type itemIconUrls
-                  itemIconUrls.forEach((iconUrl: string | null, index: number) => { // Explicitly type iconUrl and index
-                    (characterData.equipment as any).equipped_items[index].iconUrl = iconUrl; // Cast to any
+                map((itemIconUrls: (string | null)[]) => {
+                  itemIconUrls.forEach((iconUrl: string | null, index: number) => {
+                    characterData.equipment.equipped_items[index].iconUrl = iconUrl;
                   });
                   return characterData;
                 })
               );
             } else {
-              return of(characterData); // No equipped items, return characterData as is
+              return of(characterData);
             }
           })
         );
